@@ -24,11 +24,15 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
     return notFound();
   }
 
-  // Increment view counter
-  await prisma.product.update({
-    where: { id: product.id },
-    data: { views: { increment: 1 } },
-  });
+  // Increment view counter safely
+  try {
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { views: { increment: 1 } },
+    });
+  } catch (e) {
+    // ignore increment error
+  }
 
   // Fetch related products in the same category
   const relatedProducts = await prisma.product.findMany({

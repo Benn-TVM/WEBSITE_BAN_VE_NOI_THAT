@@ -25,46 +25,53 @@ interface HomePageProps {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const searchQuery = searchParams.q?.trim() || '';
 
-  // Fetch featured products
-  const featuredProducts = await prisma.product.findMany({
-    where: {
-      isFeatured: true,
-      ...(searchQuery ? {
-        OR: [
-          { title: { contains: searchQuery } },
-          { description: { contains: searchQuery } },
-          { formats: { contains: searchQuery } },
-          { sku: { contains: searchQuery } },
-        ]
-      } : {})
-    },
-    include: {
-      category: true,
-      images: true,
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 8,
-  });
+  let featuredProducts: any[] = [];
+  let recentProducts: any[] = [];
 
-  // Fetch all recent products
-  const recentProducts = await prisma.product.findMany({
-    where: {
-      ...(searchQuery ? {
-        OR: [
-          { title: { contains: searchQuery } },
-          { description: { contains: searchQuery } },
-          { formats: { contains: searchQuery } },
-          { sku: { contains: searchQuery } },
-        ]
-      } : {})
-    },
-    include: {
-      category: true,
-      images: true,
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 12,
-  });
+  try {
+    // Fetch featured products
+    featuredProducts = await prisma.product.findMany({
+      where: {
+        isFeatured: true,
+        ...(searchQuery ? {
+          OR: [
+            { title: { contains: searchQuery } },
+            { description: { contains: searchQuery } },
+            { formats: { contains: searchQuery } },
+            { sku: { contains: searchQuery } },
+          ]
+        } : {})
+      },
+      include: {
+        category: true,
+        images: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+    });
+
+    // Fetch all recent products
+    recentProducts = await prisma.product.findMany({
+      where: {
+        ...(searchQuery ? {
+          OR: [
+            { title: { contains: searchQuery } },
+            { description: { contains: searchQuery } },
+            { formats: { contains: searchQuery } },
+            { sku: { contains: searchQuery } },
+          ]
+        } : {})
+      },
+      include: {
+        category: true,
+        images: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 12,
+    });
+  } catch (error) {
+    console.error('Database fetch error in HomePage:', error);
+  }
 
   return (
     <div className="space-y-10 pb-12">
