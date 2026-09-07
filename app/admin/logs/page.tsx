@@ -233,7 +233,7 @@ export default function AdminLogsPage() {
         </form>
 
         {/* Level Filter Tabs */}
-        <div className="flex items-center space-x-1.5 self-start md:self-auto overflow-x-auto w-full md:w-auto">
+        <div className="flex items-center space-x-1.5 self-start md:self-auto overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
           <span className="text-xs text-slate-400 font-medium mr-1 flex items-center">
             <Filter className="w-3.5 h-3.5 mr-1" /> Mức độ:
           </span>

@@ -87,8 +87,8 @@ export default function ProductListClient({ initialProducts }: { initialProducts
       </div>
 
       {/* Filter search bar */}
-      <div className="p-4 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-4 shadow-xs">
-        <div className="relative flex-1 max-w-md">
+      <div className="p-4 rounded-xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="relative flex-1 w-full max-w-md">
           <input
             type="text"
             value={search}
@@ -99,7 +99,7 @@ export default function ProductListClient({ initialProducts }: { initialProducts
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
         </div>
 
-        <span className="text-xs text-slate-500 font-mono font-medium">
+        <span className="text-xs text-slate-500 font-mono font-medium whitespace-nowrap">
           Hiển thị: <strong className="text-slate-800">{filtered.length}</strong>/{products.length} bản vẽ
         </span>
       </div>

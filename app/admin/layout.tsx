@@ -17,7 +17,9 @@ import {
   ShieldCheck,
   Lock,
   FolderTree,
-  History
+  History,
+  Menu,
+  X
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +29,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [adminUser, setAdminUser] = useState<any>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -144,10 +151,135 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-xs">
+      
+      {/* Mobile Top App Bar */}
+      <header className="sticky top-0 z-30 flex md:hidden items-center justify-between px-4 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition focus:outline-none cursor-pointer"
+            aria-label="Toggle navigation menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5 text-orange-600" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          <Link href="/admin" className="flex items-center space-x-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-bold shadow-xs">
+              <Crown className="w-4 h-4" />
+            </div>
+            <span className="font-extrabold text-slate-900 text-xs tracking-wider uppercase">
+              ADMIN <span className="text-orange-600">PORTAL</span>
+            </span>
+          </Link>
+        </div>
+
+        {/* Compact Admin Badge on Mobile */}
+        <div className="flex items-center space-x-1.5 bg-orange-50 border border-orange-200 text-slate-800 px-2.5 py-1 rounded-lg">
+          <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-3 h-3" />
+          </div>
+          <span className="text-[11px] font-bold text-orange-700">Admin</span>
+        </div>
+      </header>
+
+      {/* Mobile Drawer Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 md:hidden transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Drawer Sheet */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white flex flex-col shadow-2xl md:hidden transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Drawer Header */}
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-bold shadow-sm">
+              <Crown className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-extrabold text-slate-900 text-sm tracking-wider uppercase block">
+                ADMIN <span className="text-orange-600">PORTAL</span>
+              </span>
+              <span className="text-[10px] text-slate-400 block font-medium">
+                Quản trị bản vẽ mỹ nghệ
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Drawer Nav links */}
+        <nav className="p-4 space-y-1.5 flex-1 overflow-y-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs transition-all ${
+                  isActive
+                    ? 'bg-orange-50 text-orange-600 border border-orange-200 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-orange-600' : 'text-slate-400'}`} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Drawer Footer Actions */}
+        <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50/70">
+          <div className="flex items-center space-x-2 text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200 font-mono shadow-xs">
+            <Clock className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+            <span className="truncate">{currentDateTime || 'Đang đồng bộ giờ...'}</span>
+          </div>
+
+          <div className="flex items-center space-x-2 bg-white border border-slate-200 p-2 rounded-lg text-xs shadow-xs">
+            <ShieldCheck className="w-4 h-4 text-orange-600 shrink-0" />
+            <span className="truncate text-slate-700 font-mono text-[11px]">{adminUser?.email || 'admin@gmail.com'}</span>
+          </div>
+
+          <Link
+            href="/"
+            target="_blank"
+            className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 hover:text-orange-600 hover:bg-orange-50 border border-slate-200 transition shadow-xs"
+          >
+            <span>Xem trang Web User</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleAdminLogout}
+            className="w-full flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition text-left cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Đăng xuất Quản trị</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Persistent Sidebar */}
+      <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shrink-0 min-h-screen sticky top-0 h-screen shadow-xs">
         
-        {/* Admin Brand */}
+        {/* Desktop Admin Brand */}
         <div className="p-5 border-b border-slate-200 flex items-center justify-between">
           <Link href="/admin" className="flex items-center space-x-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-bold shadow-sm">
@@ -165,7 +297,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Navigation links */}
-        <nav className="p-4 space-y-1.5 flex-1">
+        <nav className="p-4 space-y-1.5 flex-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -211,12 +343,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 px-4 sm:px-6 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shadow-xs">
-          <div className="text-xs text-slate-500 font-medium truncate hidden md:block">
+        
+        {/* Desktop Top Header */}
+        <header className="hidden md:flex h-16 px-6 bg-white border-b border-slate-200 items-center justify-between gap-3 shadow-xs sticky top-0 z-20">
+          <div className="text-xs text-slate-500 font-medium truncate">
             Hệ thống Quản trị & Kích hoạt mã VietQR tự động
           </div>
 
-          <div className="flex items-center space-x-2.5 sm:space-x-4 ml-auto">
+          <div className="flex items-center space-x-3 ml-auto">
             {/* Live Date & Time */}
             <div className="flex items-center space-x-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200/70 transition px-3 py-1.5 rounded-lg border border-slate-200 font-mono shadow-xs">
               <Clock className="w-3.5 h-3.5 text-orange-600 shrink-0" />
@@ -240,6 +374,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
+        {/* Page Content */}
         <main className="p-4 sm:p-6 md:p-8 flex-1 overflow-y-auto">
           {children}
         </main>

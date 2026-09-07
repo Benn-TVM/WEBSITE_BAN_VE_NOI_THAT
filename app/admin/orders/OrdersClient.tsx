@@ -84,8 +84,8 @@ export default function OrdersClient({ initialOrders }: { initialOrders: OrderIt
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-xs">
+      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative flex-1 w-full sm:max-w-xs">
           <input
             type="text"
             value={search}
@@ -97,7 +97,7 @@ export default function OrdersClient({ initialOrders }: { initialOrders: OrderIt
         </div>
 
         {/* Status tabs */}
-        <div className="flex space-x-1.5 text-xs font-semibold">
+        <div className="flex space-x-1.5 text-xs font-semibold overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
           <button
             onClick={() => setStatusFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg border transition ${
