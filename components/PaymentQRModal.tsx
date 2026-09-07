@@ -87,9 +87,10 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
           setIsPaid(true);
           if (onSuccess) onSuccess();
           clearInterval(interval);
+          const prodParam = product?.id || (activeItems[0] ? activeItems[0].id : '');
           setTimeout(() => {
-            window.location.href = `/tai-ve/${token}`;
-          }, 1500);
+            window.location.href = `/tai-ve/${token}?product=${prodParam}&orderCode=${order.orderCode}`;
+          }, 1200);
         }
       } catch (err) {
         console.error('Polling error:', err);
@@ -170,9 +171,10 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
         setIsPaid(true);
         if (onSuccess) onSuccess();
 
+        const prodParam = product?.id || (activeItems[0] ? activeItems[0].id : '');
         // Tự động chuyển thẳng tới trang tải file
         setTimeout(() => {
-          window.location.href = `/tai-ve/${token}`;
+          window.location.href = `/tai-ve/${token}?product=${prodParam}&orderCode=${currentOrder.orderCode}`;
         }, 1200);
       } else {
         alert(data.error || 'Không thể xác nhận thanh toán demo');
@@ -274,7 +276,8 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
                   type="button"
                   onClick={() => {
                     const targetToken = order?.downloadToken || order?.orderCode || orderCode;
-                    window.location.href = `/tai-ve/${targetToken}`;
+                    const prodParam = product?.id || (activeItems[0] ? activeItems[0].id : '');
+                    window.location.href = `/tai-ve/${targetToken}?product=${prodParam}&orderCode=${order?.orderCode || orderCode}`;
                   }}
                   className="inline-flex items-center px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase tracking-wider text-xs shadow-md hover:shadow-lg transition cursor-pointer"
                 >

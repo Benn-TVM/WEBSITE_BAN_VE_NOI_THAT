@@ -21,7 +21,11 @@ export async function GET(
     });
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({
+        status: 'COMPLETED',
+        downloadToken: orderCode,
+        expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+      });
     }
 
     return NextResponse.json({

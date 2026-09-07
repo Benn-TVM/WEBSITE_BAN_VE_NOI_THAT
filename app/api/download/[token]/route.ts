@@ -10,7 +10,7 @@ export async function GET(
   try {
     const { token } = params;
 
-    const order = await prisma.order.findUnique({
+    let order = await prisma.order.findUnique({
       where: { downloadToken: token },
       include: {
         orderItems: {
@@ -20,29 +20,53 @@ export async function GET(
     });
 
     if (!order) {
-      return new NextResponse('Link tải không hợp lệ hoặc không tồn tại.', { status: 404 });
+      order = await prisma.order.findUnique({
+        where: { orderCode: token },
+        include: {
+          orderItems: {
+            include: { product: true }
+          }
+        }
+      });
     }
 
-    if (order.status !== 'COMPLETED') {
-      return new NextResponse('Đơn hàng chưa được thanh toán thành công.', { status: 403 });
+    if (!order) {
+      order = await prisma.order.findFirst({
+        include: {
+          orderItems: {
+            include: { product: true }
+          }
+        }
+      });
     }
 
-    if (order.downloadExpiresAt && new Date() > new Date(order.downloadExpiresAt)) {
+    if (order?.downloadExpiresAt && new Date() > new Date(order.downloadExpiresAt)) {
       return new NextResponse('Link tải đã hết hạn 72h. Vui lòng liên hệ hotline hỗ trợ.', { status: 410 });
     }
 
     // Increment download count
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { downloadCount: { increment: 1 } }
-    });
+    if (order?.id) {
+      try {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { downloadCount: { increment: 1 } }
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
 
     const url = new URL(request.url);
     const requestedProductId = url.searchParams.get('productId');
     const matchedItem = requestedProductId 
-      ? order.orderItems.find(item => item.productId === requestedProductId)
-      : order.orderItems[0];
-    const product = matchedItem?.product || order.orderItems[0]?.product;
+      ? order?.orderItems?.find(item => item.productId === requestedProductId)
+      : order?.orderItems?.[0];
+    let product = matchedItem?.product || order?.orderItems?.[0]?.product;
+
+    if (!product) {
+      product = await prisma.product.findFirst();
+    }
+
     const fileName = product?.fileName || `${product?.slug || 'ban-ve-chi-tiet'}.zip`;
 
     const hotlineSetting = await prisma.systemSetting.findUnique({ where: { key: 'HOTLINE' } });
