@@ -19,7 +19,8 @@ import {
   FolderTree,
   History,
   Menu,
-  X
+  X,
+  ChevronDown
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -30,9 +31,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsProfileDropdownOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -149,6 +152,65 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Cấu hình Ngân hàng & QR', href: '/admin/settings', icon: Settings },
   ];
 
+  const renderProfileDropdown = () => (
+    <>
+      {/* Click outside backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-slate-900/10"
+        onClick={() => setIsProfileDropdownOpen(false)}
+      />
+
+      {/* Dropdown Menu Box */}
+      <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150 space-y-2 text-left">
+        
+        {/* 1. Thời gian hiện tại */}
+        <div className="flex items-center space-x-2 text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200 font-mono shadow-xs">
+          <Clock className="w-4 h-4 text-orange-600 shrink-0" />
+          <span className="truncate">{currentDateTime || 'Đang đồng bộ giờ...'}</span>
+        </div>
+
+        {/* 2. Tài khoản Admin */}
+        <div className="flex items-center space-x-2.5 bg-orange-50/70 border border-orange-200 p-2.5 rounded-xl shadow-xs">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-800 font-mono truncate">
+              {adminUser?.email || 'admin@gmail.com'}
+            </span>
+            <span className="text-[10px] bg-orange-600 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ml-1.5">
+              Admin
+            </span>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-100 my-1"></div>
+
+        {/* 3. Xem trang Web User */}
+        <Link
+          href="/"
+          target="_blank"
+          onClick={() => setIsProfileDropdownOpen(false)}
+          className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white text-slate-700 hover:text-orange-600 hover:bg-orange-50 border border-slate-200 transition shadow-xs"
+        >
+          <span>Xem trang Web User</span>
+          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+        </Link>
+
+        {/* 4. Đăng xuất Quản trị */}
+        <button
+          type="button"
+          onClick={handleAdminLogout}
+          className="w-full flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition text-left cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5 text-red-600" />
+          <span>Đăng xuất Quản trị</span>
+        </button>
+
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-[#f4f6fa] text-slate-800 flex flex-col md:flex-row">
       
@@ -174,12 +236,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </div>
 
-        {/* Compact Admin Badge on Mobile */}
-        <div className="flex items-center space-x-1.5 bg-orange-50 border border-orange-200 text-slate-800 px-2.5 py-1 rounded-lg">
-          <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-3 h-3" />
-          </div>
-          <span className="text-[11px] font-bold text-orange-700">Admin</span>
+        {/* Admin Avatar Button on Mobile (Triggers Dropdown) */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+            className="flex items-center space-x-1.5 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-slate-800 p-1 pr-2 rounded-full cursor-pointer shadow-xs focus:outline-none transition active:scale-95"
+            aria-label="Admin Profile"
+          >
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <ShieldCheck className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-[11px] font-bold text-orange-700">Admin</span>
+            <ChevronDown className={`w-3 h-3 text-orange-600 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isProfileDropdownOpen && renderProfileDropdown()}
         </div>
       </header>
 
@@ -244,35 +316,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        {/* Drawer Footer Actions */}
-        <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50/70">
-          <div className="flex items-center space-x-2 text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200 font-mono shadow-xs">
-            <Clock className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-            <span className="truncate">{currentDateTime || 'Đang đồng bộ giờ...'}</span>
-          </div>
-
-          <div className="flex items-center space-x-2 bg-white border border-slate-200 p-2 rounded-lg text-xs shadow-xs">
-            <ShieldCheck className="w-4 h-4 text-orange-600 shrink-0" />
-            <span className="truncate text-slate-700 font-mono text-[11px]">{adminUser?.email || 'admin@gmail.com'}</span>
-          </div>
-
-          <Link
-            href="/"
-            target="_blank"
-            className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 hover:text-orange-600 hover:bg-orange-50 border border-slate-200 transition shadow-xs"
-          >
-            <span>Xem trang Web User</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleAdminLogout}
-            className="w-full flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition text-left cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Đăng xuất Quản trị</span>
-          </button>
+        {/* Drawer Footer */}
+        <div className="p-4 border-t border-slate-200 text-center bg-slate-50/70">
+          <p className="text-[11px] text-slate-400 font-medium">
+            Hệ thống Quản trị Bản vẽ • v1.0
+          </p>
         </div>
       </div>
 
@@ -318,25 +366,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-slate-200 space-y-2">
-          <Link
-            href="/"
-            target="_blank"
-            className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 hover:text-orange-600 hover:bg-orange-50 border border-slate-200 hover:border-orange-200 transition"
-          >
-            <span>Xem trang Web User</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleAdminLogout}
-            className="w-full flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition text-left cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Đăng xuất Quản trị</span>
-          </button>
+        {/* Desktop Sidebar Footer */}
+        <div className="p-4 border-t border-slate-200 text-center bg-slate-50/40">
+          <p className="text-[11px] text-slate-400 font-medium">
+            Hệ thống Quản trị Bản vẽ • v1.0
+          </p>
         </div>
 
       </aside>
@@ -351,25 +385,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center space-x-3 ml-auto">
-            {/* Live Date & Time */}
-            <div className="flex items-center space-x-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200/70 transition px-3 py-1.5 rounded-lg border border-slate-200 font-mono shadow-xs">
-              <Clock className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-              <span>{currentDateTime || 'Đang đồng bộ giờ...'}</span>
-            </div>
-
-            {/* Admin Account */}
-            <div className="flex items-center space-x-2 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 text-slate-800 px-3 py-1.5 rounded-lg shadow-xs">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
-                <ShieldCheck className="w-3.5 h-3.5" />
-              </div>
-              <div className="flex items-center space-x-2">
+            {/* Admin Avatar Button on Desktop (Triggers Dropdown) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                className="flex items-center space-x-2.5 bg-slate-50 hover:bg-orange-50/70 border border-slate-200 hover:border-orange-300 py-1.5 px-3 rounded-full transition shadow-xs cursor-pointer focus:outline-none active:scale-98"
+                aria-label="Admin Profile Menu"
+              >
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
                 <span className="text-xs font-semibold text-slate-800 font-mono">
                   {adminUser?.email || 'admin@gmail.com'}
                 </span>
                 <span className="text-[10px] bg-orange-600 text-white px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
                   Admin
                 </span>
-              </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isProfileDropdownOpen && renderProfileDropdown()}
             </div>
           </div>
         </header>
