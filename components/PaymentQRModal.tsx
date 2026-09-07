@@ -55,21 +55,23 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
     downloadToken?: string;
   } | null>(null);
 
-  const isCart = cartItems.length > 0;
+  const [cachedItems] = useState(cartItems);
+  const isCart = cachedItems.length > 0 || cartItems.length > 0;
+  const activeItems = cartItems.length > 0 ? cartItems : cachedItems;
   const computedTotal = isCart
-    ? cartItems.reduce((sum, item) => sum + item.price, 0)
+    ? activeItems.reduce((sum, item) => sum + item.price, 0)
     : (product?.price || 0);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
 
-  // Auto create order when modal opens if not already created AND user is logged in
+  // Auto create order when modal opens if not already created
   useEffect(() => {
-    if (isOpen && !order && user) {
+    if (isOpen && !order) {
       handleCreateOrder();
     }
-  }, [isOpen, user]);
+  }, [isOpen]);
 
   // Polling order status
   useEffect(() => {
@@ -80,9 +82,14 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
         const res = await fetch(`/api/orders/${order.orderCode}/status`);
         const data = await res.json();
         if (data.status === 'COMPLETED') {
+          const token = data.downloadToken || order.downloadToken || order.orderCode;
+          setOrder((prev) => (prev ? { ...prev, downloadToken: token } : prev));
           setIsPaid(true);
           if (onSuccess) onSuccess();
           clearInterval(interval);
+          setTimeout(() => {
+            window.location.href = `/tai-ve/${token}`;
+          }, 1500);
         }
       } catch (err) {
         console.error('Polling error:', err);
@@ -92,18 +99,22 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
     return () => clearInterval(interval);
   }, [order, isPaid, onSuccess]);
 
-  const handleCreateOrder = async () => {
+  const handleCreateOrder = async (): Promise<any> => {
     setIsSubmitting(true);
     try {
       const payload: any = {
-        customerName: customerName || 'Khách hàng',
-        customerEmail: customerEmail || 'khach@example.com',
-        customerPhone: customerPhone || '0987000000',
+        customerName: customerName || user?.name || 'Khách hàng',
+        customerEmail: customerEmail || user?.email || 'khach@example.com',
+        customerPhone: customerPhone || user?.phone || '0987000000',
         paymentMethod: activeTab,
       };
 
       if (isCart) {
-        payload.items = cartItems.map((i) => ({ productId: i.id, price: i.price }));
+        payload.items = activeItems.map((i) => ({ 
+          productId: i.id, 
+          slug: (i as any).slug, 
+          price: i.price 
+        }));
       } else if (product) {
         payload.productId = product.id;
       }
@@ -114,11 +125,14 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.order) {
         setOrder(data.order);
+        return data.order;
       }
+      return null;
     } catch (err) {
       console.error('Error creating order:', err);
+      return null;
     } finally {
       setIsSubmitting(false);
     }
@@ -131,22 +145,41 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
   };
 
   const handleManualConfirm = async () => {
-    if (!order) return;
     setCheckingPayment(true);
     try {
-      const res = await fetch(`/api/orders/${order.orderCode}/confirm`, {
+      let currentOrder = order;
+      if (!currentOrder) {
+        currentOrder = await handleCreateOrder();
+      }
+
+      if (!currentOrder) {
+        alert('Đang khởi tạo đơn hàng, vui lòng bấm lại sau 1 giây!');
+        return;
+      }
+
+      const res = await fetch(`/api/orders/${currentOrder.orderCode}/confirm`, {
         method: 'POST',
       });
       const data = await res.json();
       if (data.success) {
-        if (data.downloadToken) {
-          setOrder((prev) => (prev ? { ...prev, downloadToken: data.downloadToken } : prev));
-        }
+        const token = data.downloadToken || currentOrder.downloadToken || currentOrder.orderCode;
+        setOrder((prev) => ({
+          ...(prev || currentOrder),
+          downloadToken: token,
+        }));
         setIsPaid(true);
         if (onSuccess) onSuccess();
+
+        // Tự động chuyển thẳng tới trang tải file
+        setTimeout(() => {
+          window.location.href = `/tai-ve/${token}`;
+        }, 1200);
+      } else {
+        alert(data.error || 'Không thể xác nhận thanh toán demo');
       }
     } catch (err) {
       console.error(err);
+      alert('Lỗi kết nối khi xác nhận thanh toán');
     } finally {
       setCheckingPayment(false);
     }
@@ -231,15 +264,19 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
                 Xác Nhận Thanh Toán Thành Công!
               </h4>
               <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
-                Hệ thống đã nhận được chuyển khoản cho đơn hàng <strong>{orderCode}</strong>. Bản vẽ của bạn đã sẵn sàng để tải xuống.
+                Hệ thống đã xác nhận đơn hàng <strong>{order?.orderCode || orderCode}</strong>. Bản vẽ của bạn đã sẵn sàng để tải xuống.
               </p>
+              <div className="text-xs font-semibold text-orange-600 animate-pulse">
+                ⏳ Đang tự động chuyển hướng đến trang tải file...
+              </div>
               <div className="pt-2">
                 <button
+                  type="button"
                   onClick={() => {
-                    onClose();
-                    router.push(`/tai-ve/${order?.downloadToken || orderCode}`);
+                    const targetToken = order?.downloadToken || order?.orderCode || orderCode;
+                    window.location.href = `/tai-ve/${targetToken}`;
                   }}
-                  className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase tracking-wider text-xs shadow-md transition"
+                  className="inline-flex items-center px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase tracking-wider text-xs shadow-md hover:shadow-lg transition cursor-pointer"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Mở Trang Tải File Ngay
