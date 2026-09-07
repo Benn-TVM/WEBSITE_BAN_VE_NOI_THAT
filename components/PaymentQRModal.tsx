@@ -11,7 +11,8 @@ import {
   CheckCircle2, 
   Loader2, 
   Download, 
-  ShieldCheck
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 import { formatVND, getVietQRUrl, getMoMoQRUrl, DEFAULT_BANK_CONFIG } from '@/lib/vietqr';
 import { useRouter } from 'next/navigation';
@@ -138,7 +139,11 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
       });
       const data = await res.json();
       if (data.success) {
+        if (data.downloadToken) {
+          setOrder((prev) => (prev ? { ...prev, downloadToken: data.downloadToken } : prev));
+        }
         setIsPaid(true);
+        if (onSuccess) onSuccess();
       }
     } catch (err) {
       console.error(err);
@@ -454,10 +459,16 @@ export default function PaymentQRModal({ product, cartItems = [], isOpen, onClos
 
               {/* Bottom Action */}
               <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center text-xs text-slate-500">
-                  <ShieldCheck className="w-4 h-4 mr-1.5 text-emerald-600" />
-                  Giao dịch bảo mật – Kích hoạt tải file ngay sau khi chuyển khoản
-                </div>
+                <button
+                  type="button"
+                  onClick={handleManualConfirm}
+                  disabled={checkingPayment}
+                  className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold text-xs transition flex items-center justify-center shadow-xs"
+                  title="Dành cho kiểm thử/xem demo: Kích hoạt thành công tức thì không cần chuyển khoản thật"
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-600" />
+                  <span>⚡ Test Demo: Giả lập thanh toán</span>
+                </button>
 
                 <button
                   type="button"

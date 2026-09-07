@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, FolderPlus, Sparkles, Image as ImageIcon } from 'lucide-react';
 
-const CATEGORIES_LIST = [
+const DEFAULT_CATEGORIES = [
   { id: 'cat-hoa-van', name: 'Hoa văn' },
   { id: 'cat-cong-da', name: 'Cổng đá' },
   { id: 'cat-lan-can', name: 'Lan can' },
@@ -17,6 +17,7 @@ const CATEGORIES_LIST = [
 
 export default function NewProductPage() {
   const router = useRouter();
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -32,6 +33,21 @@ export default function NewProductPage() {
     details: 'Hồ sơ gồm: File AutoCAD 2D bổ chi tiết 100% cấu kiện; File 3D phối cảnh; Bảng dự toán khối lượng vật tư.',
     isFeatured: true,
   });
+
+  useEffect(() => {
+    fetch('/api/admin/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.categories && data.categories.length > 0) {
+          setCategories(data.categories);
+          setFormData((prev) => ({
+            ...prev,
+            categoryId: prev.categoryId || data.categories[0].id,
+          }));
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +121,7 @@ export default function NewProductPage() {
               onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
               className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
             >
-              {CATEGORIES_LIST.map((cat) => (
+              {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>

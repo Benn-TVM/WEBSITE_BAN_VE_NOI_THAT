@@ -17,11 +17,18 @@ export async function POST(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    let downloadToken = order.downloadToken;
     if (order.status !== 'COMPLETED') {
+      if (!downloadToken) {
+        const crypto = await import('crypto');
+        downloadToken = crypto.randomBytes(16).toString('hex');
+      }
+
       await prisma.order.update({
         where: { id: order.id },
         data: {
           status: 'COMPLETED',
+          downloadToken,
           transactions: {
             create: {
               amount: order.totalAmount,
@@ -45,7 +52,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       status: 'COMPLETED',
-      downloadToken: order.downloadToken,
+      downloadToken: downloadToken,
     });
   } catch (error) {
     console.error('Confirm order error:', error);

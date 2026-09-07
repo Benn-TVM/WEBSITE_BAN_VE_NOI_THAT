@@ -10,7 +10,8 @@ import {
   Layers, 
   Sparkles,
   Download,
-  Eye
+  Eye,
+  Pencil
 } from 'lucide-react';
 import { formatVND } from '@/lib/vietqr';
 import { useRouter } from 'next/navigation';
@@ -171,6 +172,13 @@ export default function ProductListClient({ initialProducts }: { initialProducts
                       title="Xem trang sản phẩm"
                     >
                       <ExternalLink className="w-4 h-4" />
+                    </Link>
+                    <Link
+                      href={`/admin/products/${p.id}/edit`}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition inline-block"
+                      title="Chỉnh sửa bản vẽ"
+                    >
+                      <Pencil className="w-4 h-4" />
                     </Link>
                     <button
                       onClick={() => handleDelete(p.id, p.title)}

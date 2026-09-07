@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 export default async function DownloadPage({ params }: { params: { token: string } }) {
   const { token } = params;
 
-  const order = await prisma.order.findUnique({
+  let order = await prisma.order.findUnique({
     where: { downloadToken: token },
     include: {
       orderItems: {
@@ -35,6 +35,24 @@ export default async function DownloadPage({ params }: { params: { token: string
       }
     }
   });
+
+  if (!order) {
+    order = await prisma.order.findUnique({
+      where: { orderCode: token },
+      include: {
+        orderItems: {
+          include: {
+            product: {
+              include: {
+                images: true,
+                category: true,
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 
   if (!order) {
     return notFound();

@@ -2,15 +2,62 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
+async function checkAdmin() {
+  const cookieStore = cookies();
+  const userId = cookieStore.get('user_token')?.value;
+  if (!userId) return null;
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || (user.email !== 'admin@gmail.com' && user.email !== 'admin')) {
+    return null;
+  }
+  return user;
+}
+
+export async function GET(request: Request) {
+  try {
+    const admin = await checkAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Chỉ tài khoản quản trị mới có quyền thực hiện' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (id) {
+      const product = await prisma.product.findUnique({
+        where: { id },
+        include: {
+          category: true,
+          images: true,
+        },
+      });
+
+      if (!product) {
+        return NextResponse.json({ error: 'Không tìm thấy bản vẽ' }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, product });
+    }
+
+    const products = await prisma.product.findMany({
+      include: {
+        category: true,
+        images: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return NextResponse.json({ success: true, products });
+  } catch (error) {
+    console.error('Get products error:', error);
+    return NextResponse.json({ error: 'Lỗi máy chủ' }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies();
-    const userId = cookieStore.get('user_token')?.value;
-    if (!userId) {
-      return NextResponse.json({ error: 'Vui lòng đăng nhập quản trị viên' }, { status: 401 });
-    }
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || (user.email !== 'admin@gmail.com' && user.email !== 'admin')) {
+    const admin = await checkAdmin();
+    if (!admin) {
       return NextResponse.json({ error: 'Chỉ tài khoản quản trị mới có quyền thực hiện' }, { status: 403 });
     }
 
@@ -63,6 +110,10 @@ export async function POST(request: Request) {
             isPrimary: true,
           }
         }
+      },
+      include: {
+        images: true,
+        category: true,
       }
     });
 
@@ -73,15 +124,87 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PUT(request: Request) {
+  try {
+    const admin = await checkAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Chỉ tài khoản quản trị mới có quyền thực hiện' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const {
+      id,
+      title,
+      categoryId,
+      price,
+      originalPrice,
+      formats,
+      fileSize,
+      dimensions,
+      sku,
+      description,
+      details,
+      imageUrl,
+      isFeatured,
+    } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Thiếu ID bản vẽ' }, { status: 400 });
+    }
+
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+    if (!existingProduct) {
+      return NextResponse.json({ error: 'Bản vẽ không tồn tại' }, { status: 404 });
+    }
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        title: title || existingProduct.title,
+        categoryId: categoryId || existingProduct.categoryId,
+        price: price !== undefined ? Number(price) : existingProduct.price,
+        originalPrice: originalPrice !== undefined ? (originalPrice ? Number(originalPrice) : null) : existingProduct.originalPrice,
+        formats: formats || existingProduct.formats,
+        fileSize: fileSize || existingProduct.fileSize,
+        dimensions: dimensions !== undefined ? dimensions : existingProduct.dimensions,
+        sku: sku || existingProduct.sku,
+        description: description || existingProduct.description,
+        details: details !== undefined ? details : existingProduct.details,
+        isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : existingProduct.isFeatured,
+      },
+    });
+
+    if (imageUrl) {
+      const primaryImage = await prisma.productImage.findFirst({
+        where: { productId: id, isPrimary: true },
+      });
+      if (primaryImage) {
+        await prisma.productImage.update({
+          where: { id: primaryImage.id },
+          data: { url: imageUrl },
+        });
+      } else {
+        await prisma.productImage.create({
+          data: {
+            productId: id,
+            url: imageUrl,
+            isPrimary: true,
+          },
+        });
+      }
+    }
+
+    return NextResponse.json({ success: true, product });
+  } catch (error) {
+    console.error('Update product error:', error);
+    return NextResponse.json({ error: 'Không thể cập nhật bản vẽ' }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: Request) {
   try {
-    const cookieStore = cookies();
-    const userId = cookieStore.get('user_token')?.value;
-    if (!userId) {
-      return NextResponse.json({ error: 'Vui lòng đăng nhập quản trị viên' }, { status: 401 });
-    }
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user || (user.email !== 'admin@gmail.com' && user.email !== 'admin')) {
+    const admin = await checkAdmin();
+    if (!admin) {
       return NextResponse.json({ error: 'Chỉ tài khoản quản trị mới có quyền thực hiện' }, { status: 403 });
     }
 
