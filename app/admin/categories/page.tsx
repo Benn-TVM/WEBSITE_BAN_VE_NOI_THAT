@@ -242,32 +242,34 @@ export default function AdminCategoriesPage() {
                         {cat._count?.products || 0} bản vẽ
                       </span>
                     </td>
-                    <td className="p-3.5 text-right space-x-1">
-                      <Link
-                        href={`/danh-muc/${cat.slug}`}
-                        target="_blank"
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-transparent hover:border-orange-200 transition inline-block"
-                        title="Xem trang danh mục"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(cat)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition inline-block"
-                        title="Chỉnh sửa danh mục"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(cat)}
-                        disabled={deletingId === cat.id}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition inline-block disabled:opacity-40"
-                        title="Xóa danh mục"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <td className="p-3.5 text-right align-middle">
+                      <div className="inline-flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/danh-muc/${cat.slug}`}
+                          target="_blank"
+                          className="w-8 h-8 rounded-lg text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200/80 hover:border-orange-200 transition flex items-center justify-center shrink-0"
+                          title="Xem trang danh mục"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(cat)}
+                          className="w-8 h-8 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-200 transition flex items-center justify-center shrink-0"
+                          title="Chỉnh sửa danh mục"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(cat)}
+                          disabled={deletingId === cat.id}
+                          className="w-8 h-8 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200/80 hover:border-red-200 transition flex items-center justify-center shrink-0 disabled:opacity-40"
+                          title="Xóa danh mục"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

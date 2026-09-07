@@ -164,30 +164,33 @@ export default function ProductListClient({ initialProducts }: { initialProducts
                       {p.downloads} mua
                     </div>
                   </td>
-                  <td className="p-3.5 text-right space-x-1">
-                    <Link
-                      href={`/ban-ve/${p.slug}`}
-                      target="_blank"
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-transparent hover:border-orange-200 transition inline-block"
-                      title="Xem trang sản phẩm"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Link>
-                    <Link
-                      href={`/admin/products/${p.id}/edit`}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition inline-block"
-                      title="Chỉnh sửa bản vẽ"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(p.id, p.title)}
-                      disabled={deletingId === p.id}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition inline-block"
-                      title="Xóa bản vẽ"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <td className="p-3.5 text-right align-middle">
+                    <div className="inline-flex items-center justify-end gap-1.5">
+                      <Link
+                        href={`/ban-ve/${p.slug}`}
+                        target="_blank"
+                        className="w-8 h-8 rounded-lg text-slate-500 hover:text-orange-600 hover:bg-orange-50 border border-slate-200/80 hover:border-orange-200 transition flex items-center justify-center shrink-0"
+                        title="Xem trang sản phẩm"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
+                      <Link
+                        href={`/admin/products/${p.id}/edit`}
+                        className="w-8 h-8 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-200 transition flex items-center justify-center shrink-0"
+                        title="Chỉnh sửa bản vẽ"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p.id, p.title)}
+                        disabled={deletingId === p.id}
+                        className="w-8 h-8 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200/80 hover:border-red-200 transition flex items-center justify-center shrink-0 disabled:opacity-40"
+                        title="Xóa bản vẽ"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
