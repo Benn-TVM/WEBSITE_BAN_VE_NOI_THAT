@@ -169,113 +169,8 @@ export default function Header() {
             </button>
           </form>
 
-          {/* User Auth Buttons */}
+          {/* User Actions & Shopping Cart */}
           <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0">
-            {user ? (
-              /* User Profile Menu */
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-sm hover:bg-orange-700 transition shadow-sm ring-2 ring-orange-200 hover:ring-orange-300"
-                >
-                  {user.name ? user.name[0].toUpperCase() : 'U'}
-                </button>
-
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 text-xs">
-                    <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
-                      <div className="font-bold text-slate-900 text-sm truncate">{user.name}</div>
-                      <div className="text-[11px] text-slate-500 truncate">{user.email}</div>
-                    </div>
-
-                    <div className="py-1">
-                      <Link
-                        href="/tai-khoan/yeu-thich"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
-                      >
-                        <Heart className="w-4 h-4 text-rose-500 shrink-0" />
-                        <span>Bản vẽ ưu thích</span>
-                      </Link>
-
-                      <Link
-                        href="/tai-khoan/ban-ve-da-mua"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
-                      >
-                        <Download className="w-4 h-4 text-blue-500 shrink-0" />
-                        <span>Bản vẽ đã mua</span>
-                      </Link>
-
-                      <Link
-                        href="/tai-khoan/lich-su-mua-hang"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
-                      >
-                        <History className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>Lịch sử mua hàng</span>
-                      </Link>
-
-                      <Link
-                        href="/tai-khoan/cai-dat"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
-                      >
-                        <Settings className="w-4 h-4 text-slate-500 shrink-0" />
-                        <span>Cài đặt thông tin</span>
-                      </Link>
-                    </div>
-
-                    {(user.email === 'admin@gmail.com' || (user as any).isAdmin) && (
-                      <div className="pt-1 border-t border-slate-100">
-                        <Link
-                          href="/admin"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center space-x-2.5 px-4 py-2 text-orange-600 hover:bg-orange-50 transition font-bold"
-                        >
-                          <Crown className="w-4 h-4 text-orange-600 shrink-0" />
-                          <span>Trang Quản Trị (Admin)</span>
-                        </Link>
-                      </div>
-                    )}
-
-                    <div className="pt-1 border-t border-slate-100">
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="w-full flex items-center space-x-2.5 px-4 py-2 text-red-600 hover:bg-red-50 transition text-left font-medium"
-                      >
-                        <LogOut className="w-4 h-4 shrink-0" />
-                        <span>Đăng xuất</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Login / Register */
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <button
-                  type="button"
-                  onClick={() => openLoginModal()}
-                  className="flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-orange-600 hover:bg-slate-100 border border-slate-200 transition"
-                >
-                  <LogIn className="w-3.5 h-3.5 mr-1 sm:mr-1.5 text-slate-500" />
-                  <span className="text-[11px] sm:text-xs">Đăng Nhập</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => openRegisterModal()}
-                  className="hidden sm:flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition"
-                >
-                  <UserPlus className="w-3.5 h-3.5 mr-1.5" />
-                  <span>Đăng Ký</span>
-                </button>
-              </div>
-            )}
-
             {/* Shopping Cart Button */}
             <button
               type="button"
@@ -294,14 +189,118 @@ export default function Header() {
               </span>
             </button>
 
-            {/* Mobile menu toggle button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1.5 text-slate-700 hover:bg-slate-100 rounded-lg border border-slate-200"
-              aria-label="Menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5 text-orange-600" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* User Account / Avatar Button (Nằm ở góc phải, thay thế vị trí 3 gạch cũ) */}
+            {user ? (
+              /* User Profile Menu */
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-sm hover:bg-orange-700 transition shadow-sm ring-2 ring-orange-200 hover:ring-orange-300 cursor-pointer"
+                  aria-label="Tài khoản cá nhân"
+                >
+                  {user.name ? user.name[0].toUpperCase() : 'U'}
+                </button>
+
+                {userMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 bg-transparent"
+                      onClick={() => setUserMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
+                        <div className="font-bold text-slate-900 text-sm truncate">{user.name}</div>
+                        <div className="text-[11px] text-slate-500 truncate">{user.email}</div>
+                      </div>
+
+                      <div className="py-1">
+                        <Link
+                          href="/tai-khoan/yeu-thich"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
+                        >
+                          <Heart className="w-4 h-4 text-rose-500 shrink-0" />
+                          <span>Bản vẽ ưa thích</span>
+                        </Link>
+
+                        <Link
+                          href="/tai-khoan/ban-ve-da-mua"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
+                        >
+                          <Download className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span>Bản vẽ đã mua</span>
+                        </Link>
+
+                        <Link
+                          href="/tai-khoan/lich-su-mua-hang"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
+                        >
+                          <History className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span>Lịch sử mua hàng</span>
+                        </Link>
+
+                        <Link
+                          href="/tai-khoan/cai-dat"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center space-x-2.5 px-4 py-2.5 text-slate-700 hover:bg-orange-50 hover:text-orange-600 transition font-medium"
+                        >
+                          <Settings className="w-4 h-4 text-slate-500 shrink-0" />
+                          <span>Cài đặt thông tin</span>
+                        </Link>
+                      </div>
+
+                      {(user.email === 'admin@gmail.com' || (user as any).isAdmin) && (
+                        <div className="pt-1 border-t border-slate-100">
+                          <Link
+                            href="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center space-x-2.5 px-4 py-2 text-orange-600 hover:bg-orange-50 transition font-bold"
+                          >
+                            <Crown className="w-4 h-4 text-orange-600 shrink-0" />
+                            <span>Trang Quản Trị (Admin)</span>
+                          </Link>
+                        </div>
+                      )}
+
+                      <div className="pt-1 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="w-full flex items-center space-x-2.5 px-4 py-2 text-red-600 hover:bg-red-50 transition text-left font-medium cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4 shrink-0" />
+                          <span>Đăng xuất</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              /* Login / Register */
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <button
+                  type="button"
+                  onClick={() => openLoginModal()}
+                  className="flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-orange-600 hover:bg-slate-100 border border-slate-200 transition cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5 mr-1 sm:mr-1.5 text-slate-500" />
+                  <span className="text-[11px] sm:text-xs">Đăng Nhập</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openRegisterModal()}
+                  className="hidden sm:flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition cursor-pointer"
+                >
+                  <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Đăng Ký</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -317,7 +316,7 @@ export default function Header() {
             />
             <button 
               type="submit" 
-              className="absolute right-1 top-1 bottom-1 px-2.5 rounded bg-orange-600 text-white flex items-center justify-center font-semibold text-xs"
+              className="absolute right-1 top-1 bottom-1 px-2.5 rounded bg-orange-600 text-white flex items-center justify-center font-semibold text-xs cursor-pointer"
             >
               <Search className="w-3.5 h-3.5" />
             </button>
@@ -325,7 +324,18 @@ export default function Header() {
         </div>
 
         {/* Mobile Category Ribbon (Horizontal scroll) */}
-        <div className="md:hidden bg-[#ea580c] text-white overflow-x-auto py-2 px-3 flex space-x-2 no-scrollbar shadow-xs">
+        <div className="md:hidden bg-[#ea580c] text-white overflow-x-auto py-2 px-3 flex items-center space-x-2 no-scrollbar shadow-xs">
+          {/* Nút 3 gạch mở menu chuyển xuống bên trái chữ "Tất cả" */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="px-2.5 py-1 rounded-full bg-black/25 hover:bg-white/25 active:bg-black/40 text-white text-xs font-bold shrink-0 flex items-center justify-center transition border border-white/20 shadow-xs cursor-pointer"
+            aria-label="Menu danh mục"
+            title="Menu danh mục"
+          >
+            {mobileMenuOpen ? <X className="w-3.5 h-3.5 text-amber-200" /> : <Menu className="w-3.5 h-3.5 text-white" />}
+          </button>
+
           <Link
             href="/"
             className="whitespace-nowrap px-3 py-1 rounded-full bg-black/20 hover:bg-white/20 text-[11px] font-bold shrink-0"
