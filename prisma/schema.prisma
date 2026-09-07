@@ -123,3 +123,14 @@ model SystemSetting {
   description String?
   updatedAt   DateTime @updatedAt
 }
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  action    String
+  title     String
+  details   String?
+  userEmail String?
+  userName  String?
+  level     String   @default("INFO")
+  createdAt DateTime @default(now())
+}

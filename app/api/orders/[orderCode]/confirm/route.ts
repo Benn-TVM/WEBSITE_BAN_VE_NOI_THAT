@@ -47,6 +47,16 @@ export async function POST(
           data: { downloads: { increment: 1 } },
         });
       }
+
+      const { logActivity } = await import('@/lib/logger');
+      await logActivity({
+        action: 'ORDER_PAID',
+        title: `Thanh toán đơn hàng ${order.orderCode} thành công`,
+        details: `Số tiền: ${order.totalAmount.toLocaleString('vi-VN')} đ • Phương thức: ${order.paymentMethod}`,
+        userEmail: order.customerEmail,
+        userName: order.customerName,
+        level: 'SUCCESS',
+      });
     }
 
     return NextResponse.json({

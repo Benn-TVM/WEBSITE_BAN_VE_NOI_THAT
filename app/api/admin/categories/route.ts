@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { logActivity } from '@/lib/logger';
 
 async function checkAdmin() {
   const cookieStore = cookies();
@@ -74,6 +75,15 @@ export async function POST(request: Request) {
       },
     });
 
+    await logActivity({
+      action: 'ADD_CATEGORY',
+      title: `Thêm danh mục "${category.name}"`,
+      details: `Đường dẫn slug: ${category.slug} | Thứ tự: ${category.orderIndex}`,
+      userEmail: admin.email,
+      userName: admin.name || 'Quản trị viên',
+      level: 'SUCCESS',
+    });
+
     return NextResponse.json({ success: true, category });
   } catch (error) {
     console.error('Create category error:', error);
@@ -112,6 +122,15 @@ export async function PUT(request: Request) {
       },
     });
 
+    await logActivity({
+      action: 'UPDATE_CATEGORY',
+      title: `Cập nhật danh mục "${updated.name}"`,
+      details: `Đã cập nhật thông tin danh mục #${updated.id}`,
+      userEmail: admin.email,
+      userName: admin.name || 'Quản trị viên',
+      level: 'INFO',
+    });
+
     return NextResponse.json({ success: true, category: updated });
   } catch (error) {
     console.error('Update category error:', error);
@@ -141,7 +160,20 @@ export async function DELETE(request: Request) {
       }, { status: 400 });
     }
 
+    const catToDelete = await prisma.category.findUnique({ where: { id } });
+
     await prisma.category.delete({ where: { id } });
+
+    if (catToDelete) {
+      await logActivity({
+        action: 'DELETE_CATEGORY',
+        title: `Xóa danh mục "${catToDelete.name}"`,
+        details: `Slug: ${catToDelete.slug}`,
+        userEmail: admin.email,
+        userName: admin.name || 'Quản trị viên',
+        level: 'WARNING',
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

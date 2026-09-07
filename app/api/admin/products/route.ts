@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { logActivity } from '@/lib/logger';
 
 async function checkAdmin() {
   const cookieStore = cookies();
@@ -132,6 +133,15 @@ export async function POST(request: Request) {
       },
     });
 
+    await logActivity({
+      action: 'ADD_PRODUCT',
+      title: `Thêm bản vẽ mới "${product.title}"`,
+      details: `Mã SKU: ${product.sku} | Giá bán: ${product.price.toLocaleString('vi-VN')} đ | Danh mục: ${product.category?.name || 'Mặc định'}`,
+      userEmail: admin.email,
+      userName: admin.name || 'Quản trị viên',
+      level: 'SUCCESS',
+    });
+
     return NextResponse.json({ success: true, product });
   } catch (error) {
     console.error('Create product error:', error);
@@ -214,6 +224,15 @@ export async function PUT(request: Request) {
       });
     }
 
+    await logActivity({
+      action: 'UPDATE_PRODUCT',
+      title: `Cập nhật thông tin bản vẽ "${product.title}"`,
+      details: `Giá mới: ${product.price.toLocaleString('vi-VN')} đ | Đã cập nhật thông số và hình ảnh`,
+      userEmail: admin.email,
+      userName: admin.name || 'Quản trị viên',
+      level: 'INFO',
+    });
+
     return NextResponse.json({ success: true, product });
   } catch (error) {
     console.error('Update product error:', error);
@@ -235,9 +254,22 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Missing product id' }, { status: 400 });
     }
 
+    const prodToDelete = await prisma.product.findUnique({ where: { id } });
+
     await prisma.productImage.deleteMany({ where: { productId: id } });
     await prisma.orderItem.deleteMany({ where: { productId: id } });
     await prisma.product.delete({ where: { id } });
+
+    if (prodToDelete) {
+      await logActivity({
+        action: 'DELETE_PRODUCT',
+        title: `Xóa bản vẽ "${prodToDelete.title}"`,
+        details: `ID: ${prodToDelete.id} | SKU: ${prodToDelete.sku}`,
+        userEmail: admin.email,
+        userName: admin.name || 'Quản trị viên',
+        level: 'WARNING',
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

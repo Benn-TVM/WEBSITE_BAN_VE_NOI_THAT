@@ -16,7 +16,8 @@ import {
   Clock,
   ShieldCheck,
   Lock,
-  FolderTree
+  FolderTree,
+  History
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -137,6 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Quản lý Danh mục', href: '/admin/categories', icon: FolderTree },
     { label: 'Thêm Bản vẽ Mới', href: '/admin/products/new', icon: FolderPlus },
     { label: 'Đơn hàng & Giao dịch QR', href: '/admin/orders', icon: ShoppingCart },
+    { label: 'Nhật ký Hệ thống', href: '/admin/logs', icon: History },
     { label: 'Cấu hình Ngân hàng & QR', href: '/admin/settings', icon: Settings },
   ];
 
