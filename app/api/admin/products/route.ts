@@ -64,31 +64,43 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       title,
+      slug: customSlug,
       categoryId,
       price,
       originalPrice,
       formats,
       fileSize,
       dimensions,
+      fileName,
       sku,
       description,
       details,
       imageUrl,
+      images,
       isFeatured,
+      views,
+      downloads,
     } = body;
 
     if (!title || !categoryId || !price) {
       return NextResponse.json({ error: 'Vui lòng điền đủ Tiêu đề, Danh mục và Giá bán.' }, { status: 400 });
     }
 
-    // Generate slug from title
-    const slug = title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[đĐ]/g, 'd')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+    // Generate slug from title or customSlug
+    let slug = customSlug;
+    if (!slug) {
+      slug = title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    const allImages: string[] = Array.isArray(images) && images.length > 0
+      ? images.filter(Boolean)
+      : (imageUrl ? [imageUrl] : ['https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80']);
 
     const product = await prisma.product.create({
       data: {
@@ -100,21 +112,24 @@ export async function POST(request: Request) {
         formats: formats || 'AutoCAD .dwg, 3ds Max',
         fileSize: fileSize || '50 MB',
         dimensions: dimensions || null,
+        fileName: fileName || null,
         sku: sku || 'BV-' + Math.floor(1000 + Math.random() * 9000),
         description: description || 'Hồ sơ bản vẽ chi tiết thi công hoàn chỉnh.',
         details: details || null,
         isFeatured: Boolean(isFeatured),
+        views: views !== undefined ? Number(views) : 0,
+        downloads: downloads !== undefined ? Number(downloads) : 0,
         images: {
-          create: {
-            url: imageUrl || 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80',
-            isPrimary: true,
-          }
-        }
+          create: allImages.map((url, idx) => ({
+            url: url.trim(),
+            isPrimary: idx === 0,
+          })),
+        },
       },
       include: {
         images: true,
         category: true,
-      }
+      },
     });
 
     return NextResponse.json({ success: true, product });
