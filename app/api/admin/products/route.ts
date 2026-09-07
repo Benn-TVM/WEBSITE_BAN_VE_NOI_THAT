@@ -135,17 +135,22 @@ export async function PUT(request: Request) {
     const {
       id,
       title,
+      slug,
       categoryId,
       price,
       originalPrice,
       formats,
       fileSize,
       dimensions,
+      fileName,
       sku,
       description,
       details,
       imageUrl,
+      images,
       isFeatured,
+      views,
+      downloads,
     } = body;
 
     if (!id) {
@@ -161,37 +166,37 @@ export async function PUT(request: Request) {
       where: { id },
       data: {
         title: title || existingProduct.title,
+        slug: slug || existingProduct.slug,
         categoryId: categoryId || existingProduct.categoryId,
         price: price !== undefined ? Number(price) : existingProduct.price,
         originalPrice: originalPrice !== undefined ? (originalPrice ? Number(originalPrice) : null) : existingProduct.originalPrice,
         formats: formats || existingProduct.formats,
         fileSize: fileSize || existingProduct.fileSize,
         dimensions: dimensions !== undefined ? dimensions : existingProduct.dimensions,
+        fileName: fileName !== undefined ? fileName : existingProduct.fileName,
         sku: sku || existingProduct.sku,
         description: description || existingProduct.description,
         details: details !== undefined ? details : existingProduct.details,
         isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : existingProduct.isFeatured,
+        views: views !== undefined ? Number(views) : existingProduct.views,
+        downloads: downloads !== undefined ? Number(downloads) : existingProduct.downloads,
       },
     });
 
-    if (imageUrl) {
-      const primaryImage = await prisma.productImage.findFirst({
-        where: { productId: id, isPrimary: true },
+    // Cập nhật danh sách ảnh (ảnh 0 là ảnh chính, các ảnh sau là demo chi tiết CAD)
+    const allImages: string[] = Array.isArray(images) && images.length > 0
+      ? images.filter(Boolean)
+      : (imageUrl ? [imageUrl] : []);
+
+    if (allImages.length > 0) {
+      await prisma.productImage.deleteMany({ where: { productId: id } });
+      await prisma.productImage.createMany({
+        data: allImages.map((url, idx) => ({
+          productId: id,
+          url: url.trim(),
+          isPrimary: idx === 0,
+        })),
       });
-      if (primaryImage) {
-        await prisma.productImage.update({
-          where: { id: primaryImage.id },
-          data: { url: imageUrl },
-        });
-      } else {
-        await prisma.productImage.create({
-          data: {
-            productId: id,
-            url: imageUrl,
-            isPrimary: true,
-          },
-        });
-      }
     }
 
     return NextResponse.json({ success: true, product });

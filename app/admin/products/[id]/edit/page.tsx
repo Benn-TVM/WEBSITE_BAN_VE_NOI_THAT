@@ -10,8 +10,18 @@ import {
   Image as ImageIcon, 
   Loader2, 
   Layers,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Trash2,
+  Eye,
+  Download,
+  Tag,
+  FileCode2,
+  FileArchive,
+  Info,
+  CheckCircle2
 } from 'lucide-react';
+import { formatVND } from '@/lib/vietqr';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -24,6 +34,7 @@ export default function EditProductPage() {
   
   const [formData, setFormData] = useState({
     title: '',
+    slug: '',
     categoryId: '',
     sku: '',
     price: 0,
@@ -31,12 +42,17 @@ export default function EditProductPage() {
     formats: '',
     fileSize: '',
     dimensions: '',
-    imageUrl: '',
+    fileName: '',
     description: '',
     details: '',
     isFeatured: false,
-    slug: '',
+    views: 0,
+    downloads: 0,
   });
+
+  // Multiple demo images array
+  const [images, setImages] = useState<string[]>(['']);
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   // Load product data & categories
   useEffect(() => {
@@ -61,6 +77,7 @@ export default function EditProductPage() {
           const p = prodData.product;
           setFormData({
             title: p.title || '',
+            slug: p.slug || '',
             categoryId: p.categoryId || '',
             sku: p.sku || '',
             price: p.price || 0,
@@ -68,12 +85,19 @@ export default function EditProductPage() {
             formats: p.formats || '',
             fileSize: p.fileSize || '',
             dimensions: p.dimensions || '',
-            imageUrl: p.images?.[0]?.url || '',
+            fileName: p.fileName || '',
             description: p.description || '',
             details: p.details || '',
             isFeatured: Boolean(p.isFeatured),
-            slug: p.slug || '',
+            views: p.views || 0,
+            downloads: p.downloads || 0,
           });
+
+          if (p.images && p.images.length > 0) {
+            setImages(p.images.map((img: any) => img.url));
+          } else {
+            setImages(['https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80']);
+          }
         } else {
           alert('Không tìm thấy bản vẽ!');
           router.push('/admin/products');
@@ -89,23 +113,47 @@ export default function EditProductPage() {
     fetchData();
   }, [productId, router]);
 
+  const handleAddImage = () => {
+    if (!newImageUrl.trim()) return;
+    setImages([...images, newImageUrl.trim()]);
+    setNewImageUrl('');
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    if (images.length === 1) {
+      alert('Bản vẽ cần có ít nhất 1 ảnh đại diện!');
+      return;
+    }
+    setImages(images.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleUpdateImage = (index: number, newUrl: string) => {
+    const updated = [...images];
+    updated[index] = newUrl;
+    setImages(updated);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      const validImages = images.filter((url) => url.trim().length > 0);
+
       const res = await fetch('/api/admin/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: productId,
           ...formData,
+          images: validImages,
+          imageUrl: validImages[0] || '',
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        alert('Cập nhật bản vẽ thành công!');
+        alert('Cập nhật bản vẽ thành công! Mọi thông tin đã được đồng bộ với trang chi tiết.');
         router.push('/admin/products');
       } else {
         alert(data.error || 'Có lỗi xảy ra khi cập nhật');
@@ -120,18 +168,20 @@ export default function EditProductPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto py-16 flex flex-col items-center justify-center space-y-3">
+      <div className="max-w-4xl mx-auto py-20 flex flex-col items-center justify-center space-y-3">
         <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
-        <p className="text-xs font-semibold text-slate-600">Đang tải dữ liệu hồ sơ bản vẽ...</p>
+        <p className="text-xs font-semibold text-slate-600">Đang tải hồ sơ bản vẽ...</p>
       </div>
     );
   }
 
+  const xuConverted = Math.max(1, Math.round(formData.price / 1000));
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 pb-12">
       
       {/* Top Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <Link
             href="/admin/products"
@@ -141,17 +191,17 @@ export default function EditProductPage() {
           </Link>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-extrabold text-slate-900 uppercase tracking-wide">
-                Chỉnh Sửa Bản Vẽ
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 uppercase tracking-wide">
+                Chỉnh Sửa Hồ Sơ Bản Vẽ
               </h1>
               {formData.sku && (
-                <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-mono font-bold bg-orange-100 text-orange-800 border border-orange-200 px-2 py-0.5 rounded">
                   {formData.sku}
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Cập nhật thông tin kỹ thuật, giá bán và hình ảnh cho bản vẽ.
+              Các mục dưới đây khớp 100% với các thông số hiển thị tại trang chi tiết sản phẩm.
             </p>
           </div>
         </div>
@@ -160,213 +210,373 @@ export default function EditProductPage() {
           <Link
             href={`/ban-ve/${formData.slug}`}
             target="_blank"
-            className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 transition"
+            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl border border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100 text-xs font-bold transition shadow-xs"
           >
-            <span>Xem trang mua</span>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+            <span>Xem trực tiếp ngoài Website</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-2xl bg-white border border-slate-200 p-6 md:p-8 shadow-sm space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* Title & Category */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Tiêu đề bản vẽ (*):
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="VD: Bản vẽ cổng đá tam quan 3 mái tứ trụ..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
+        {/* PHẦN 1: THÔNG TIN CƠ BẢN & ĐỊNH DANH */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm space-y-5">
+          <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+            <Tag className="w-4 h-4 text-orange-600" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              1. Thông Tin Nhận Diện & Phân Loại
+            </h2>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Danh mục (*):
-            </label>
-            <select
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-              {categories.length === 0 && (
-                <option value={formData.categoryId}>Mặc định</option>
-              )}
-            </select>
-          </div>
-        </div>
-
-        {/* Pricing & SKU */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Giá bán (VNĐ) (*):
-            </label>
-            <input
-              type="number"
-              required
-              min={0}
-              step={1000}
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm font-bold text-orange-600 focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Giá gốc niêm yết (VNĐ):
-            </label>
-            <input
-              type="number"
-              min={0}
-              step={1000}
-              value={formData.originalPrice}
-              onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Mã SKU:
-            </label>
-            <input
-              type="text"
-              value={formData.sku}
-              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              placeholder="VD: BV-CD-001"
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm uppercase focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
-          </div>
-        </div>
-
-        {/* Technical specs */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Định dạng file đính kèm:
-            </label>
-            <input
-              type="text"
-              value={formData.formats}
-              onChange={(e) => setFormData({ ...formData, formats: e.target.value })}
-              placeholder="VD: AutoCAD .dwg, 3ds Max, JDpaint..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Dung lượng file nén:
-            </label>
-            <input
-              type="text"
-              value={formData.fileSize}
-              onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
-              placeholder="VD: 85 MB, 1.2 GB..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Kích thước / Phong thủy:
-            </label>
-            <input
-              type="text"
-              value={formData.dimensions}
-              onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
-              placeholder="VD: 10.5m x 4.2m Lỗ Ban..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
-          </div>
-        </div>
-
-        {/* Image Preview & URL */}
-        <div className="space-y-3">
-          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Link hình ảnh demo bản vẽ (*):
-          </label>
-          <div className="flex flex-col sm:flex-row gap-4 items-start">
-            <div className="w-36 h-28 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
-              {formData.imageUrl ? (
-                <img
-                  src={formData.imageUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <ImageIcon className="w-8 h-8 text-slate-400" />
-              )}
-            </div>
-
-            <div className="flex-1 space-y-2 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            {/* Tiêu đề */}
+            <div className="md:col-span-8">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Tiêu đề bản vẽ (*):
+              </label>
               <input
-                type="url"
+                type="text"
                 required
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                placeholder="https://images.unsplash.com/... hoặc link ảnh online"
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="VD: Bản vẽ cổng đá tam quan 3 mái tứ trụ chạm rồng đá Ninh Bình..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white font-medium"
               />
-              <p className="text-[11px] text-slate-400">
-                Nhập link ảnh rõ nét để hiển thị ở trang chủ, chi tiết sản phẩm và giỏ hàng.
-              </p>
+            </div>
+
+            {/* Danh mục */}
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Danh mục phân loại (*):
+              </label>
+              <select
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white font-medium"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Slug URL */}
+            <div className="md:col-span-8">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Đường dẫn SEO (Slug URL):
+              </label>
+              <div className="flex items-center">
+                <span className="bg-slate-100 border border-r-0 border-slate-300 text-slate-500 px-3 py-2.5 text-xs rounded-l-xl font-mono">
+                  /ban-ve/
+                </span>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="ho-so-cong-da-tam-quan"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-r-xl px-3 py-2.5 text-slate-900 text-xs font-mono focus:outline-none focus:border-orange-500 focus:bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Mã file SKU */}
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Mã file SKU (Hiển thị [Mã file ...]):
+              </label>
+              <input
+                type="text"
+                value={formData.sku}
+                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                placeholder="VD: CD-TQ01 hoặc 230487"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm uppercase font-mono font-bold focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
             </div>
           </div>
         </div>
 
-        {/* Description & Details */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Mô tả ngắn gọn về bản vẽ:
-            </label>
-            <textarea
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Giới thiệu về phong cách kiến trúc, đối tượng áp dụng..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-4 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
+        {/* PHẦN 2: GIÁ BÁN & THƯƠNG MẠI */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm space-y-5">
+          <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+            <FileCode2 className="w-4 h-4 text-orange-600" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              2. Giá Bán & Thống Kê Hiển Thị
+            </h2>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Chi tiết các hạng mục bàn giao:
-            </label>
-            <textarea
-              rows={3}
-              value={formData.details}
-              onChange={(e) => setFormData({ ...formData, details: e.target.value })}
-              placeholder="Hồ sơ gồm những file gì, hướng dẫn sử dụng, phần mềm yêu cầu..."
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-4 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Giá tải trọn gói (VNĐ) (*):
+              </label>
+              <input
+                type="number"
+                required
+                min={0}
+                step={1000}
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-base font-extrabold text-orange-600 font-mono focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
+              <span className="text-[11px] text-amber-600 font-bold mt-1 block">
+                ≈ {xuConverted} Xu
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Giá gốc niêm yết (VNĐ):
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={1000}
+                value={formData.originalPrice}
+                onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm font-mono focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
+              <span className="text-[11px] text-slate-400 mt-1 block">
+                (Hiển thị gạch ngang giảm giá)
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5 text-slate-400" />
+                Lượt xem hiển thị:
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={formData.views}
+                onChange={(e) => setFormData({ ...formData, views: Number(e.target.value) })}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm font-mono focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                Lượt mua / Tải hiển thị:
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={formData.downloads}
+                onChange={(e) => setFormData({ ...formData, downloads: Number(e.target.value) })}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm font-mono font-bold text-emerald-600 focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Featured checkbox */}
+        {/* PHẦN 3: THÔNG SỐ KỸ THUẬT CAD & TỆP TIN */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm space-y-5">
+          <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+            <Layers className="w-4 h-4 text-orange-600" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              3. Thông Số Kỹ Thuật (Bảng Metadata Trang Chi Tiết)
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Định dạng file:
+              </label>
+              <input
+                type="text"
+                value={formData.formats}
+                onChange={(e) => setFormData({ ...formData, formats: e.target.value })}
+                placeholder="VD: AutoCAD .dwg, 3ds Max..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Dung lượng file:
+              </label>
+              <input
+                type="text"
+                value={formData.fileSize}
+                onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
+                placeholder="VD: 148 MB, 2.1 GB..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs focus:outline-none focus:border-orange-500 focus:bg-white font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Kích thước / Phong thủy:
+              </label>
+              <input
+                type="text"
+                value={formData.dimensions}
+                onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+                placeholder="VD: Rộng 8.6m x Cao 6.8m Lỗ Ban..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Tên file nén (.zip/.rar):
+              </label>
+              <input
+                type="text"
+                value={formData.fileName}
+                onChange={(e) => setFormData({ ...formData, fileName: e.target.value })}
+                placeholder="VD: Ho-so-cong-da-CD01.zip"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-xs focus:outline-none focus:border-orange-500 focus:bg-white font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* PHẦN 4: HÌNH ẢNH DEMO CHI TIẾT (GALLERY CAD) */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center space-x-2">
+              <ImageIcon className="w-4 h-4 text-orange-600" />
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                  4. Hình Ảnh Demo Bản Vẽ (Khung Xem Demo & Phóng To)
+                </h2>
+                <p className="text-[11px] text-slate-500">
+                  Ảnh đầu tiên là ảnh đại diện chính. Các ảnh tiếp theo sẽ hiển thị ở mục <strong>"HÌNH ẢNH DEMO BẢN VẼ"</strong> phóng to chi tiết.
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200 font-mono">
+              {images.length} Ảnh
+            </span>
+          </div>
+
+          {/* Danh sách ảnh hiện tại */}
+          <div className="space-y-3">
+            {images.map((url, idx) => (
+              <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center gap-3">
+                <div className="w-24 h-18 rounded-lg bg-white border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative">
+                  {url ? (
+                    <img
+                      src={url}
+                      alt={`Demo ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <ImageIcon className="w-6 h-6 text-slate-300" />
+                  )}
+                  {idx === 0 && (
+                    <span className="absolute bottom-0 inset-x-0 bg-orange-600 text-[9px] text-white text-center font-bold py-0.5 uppercase">
+                      Ảnh chính
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex-1 w-full space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-700 uppercase">
+                      {idx === 0 ? '★ Ảnh đại diện chính (Cover Thumbnail):' : `Bản vẽ chi tiết demo #${idx + 1}:`}
+                    </span>
+                  </div>
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => handleUpdateImage(idx, e.target.value)}
+                    placeholder="Nhập link ảnh (https://...)"
+                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+
+                <div className="flex sm:flex-col gap-1 shrink-0">
+                  {idx > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition"
+                      title="Xóa ảnh này"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Form thêm ảnh demo mới */}
+          <div className="pt-2 flex flex-col sm:flex-row gap-2">
+            <input
+              type="url"
+              value={newImageUrl}
+              onChange={(e) => setNewImageUrl(e.target.value)}
+              placeholder="Dán link ảnh bản vẽ demo kỹ thuật CAD mới (https://...)"
+              className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-xs text-slate-900 focus:outline-none focus:border-orange-500 focus:bg-white"
+            />
+            <button
+              type="button"
+              onClick={handleAddImage}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold uppercase tracking-wider transition shadow-xs"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Thêm Ảnh Demo
+            </button>
+          </div>
+        </div>
+
+        {/* PHẦN 5: NỘI DUNG MÔ TẢ & BÀN GIAO */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm space-y-5">
+          <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+            <Info className="w-4 h-4 text-orange-600" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              5. Nội Dung Giới Thiệu & Chi Tiết Hồ Sơ Bàn Giao
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Mô tả tóm tắt (Khung màu xám trên trang sản phẩm):
+              </label>
+              <textarea
+                rows={3}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Giới thiệu sơ lược về kiến trúc, đối tượng áp dụng, ưu điểm nổi bật..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Chi tiết hạng mục bàn giao (Hiển thị trong Tab "MÔ TẢ CHI TIẾT"):
+              </label>
+              <textarea
+                rows={4}
+                value={formData.details}
+                onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                placeholder="VD: File AutoCAD 2D bổ chi tiết 100% cấu kiện; File 3D phối cảnh; Bảng thống kê khối lượng vật tư..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 text-slate-900 text-sm focus:outline-none focus:border-orange-500 focus:bg-white font-mono text-xs"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* NỔI BẬT */}
         <div className="p-4 rounded-xl bg-orange-50/60 border border-orange-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-500 text-white flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-xs">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">Đặt làm Bản vẽ Nổi Bật</div>
-              <div className="text-[11px] text-slate-500">Hiển thị ưu tiên ở trang chủ và huy hiệu VIP</div>
+              <div className="text-xs font-bold text-slate-900">Đặt làm Bản vẽ Nổi Bật (VIP)</div>
+              <div className="text-[11px] text-slate-500">Hiển thị ưu tiên ở trang chủ và gắn huy hiệu Nổi bật</div>
             </div>
           </div>
 
@@ -381,11 +591,11 @@ export default function EditProductPage() {
           </label>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+        {/* THAO TÁC LƯU */}
+        <div className="flex items-center justify-end space-x-3 pt-3">
           <Link
             href="/admin/products"
-            className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider transition"
+            className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider transition shadow-xs"
           >
             Hủy bỏ
           </Link>
@@ -393,17 +603,17 @@ export default function EditProductPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition active:scale-98 disabled:opacity-50"
+            className="inline-flex items-center px-7 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition active:scale-98 disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Đang lưu...
+                Đang lưu thay đổi...
               </>
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Lưu Thay Đổi
+                Lưu Thay Đổi Bản Vẽ
               </>
             )}
           </button>
